@@ -1,58 +1,55 @@
 {
   "image_extensions": [
-    ".png",
-    ".jpg",
-    ".jpeg",
-    ".gif",
-    ".bmp",
-    ".tiff",
-    ".svg"
+    ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".tiff", ".svg", ".webp",
+    ".ico", ".raw", ".psd", ".ai", ".eps"
   ],
   "video_extensions": [
-    ".mp4",
-    ".avi",
-    ".mov",
-    ".mkv",
-    ".flv",
-    ".wmv"
+    ".mp4", ".avi", ".mov", ".mkv", ".flv", ".wmv", ".webm", ".m4v",
+    ".3gp", ".ogv", ".ts", ".mts"
   ],
   "audio_extensions": [
-    ".mp3",
-    ".wav",
-    ".aac",
-    ".flac",
-    ".ogg"
+    ".mp3", ".wav", ".aac", ".flac", ".ogg", ".wma", ".m4a", ".opus",
+    ".aiff", ".au", ".ra"
   ],
   "document_extensions": [
-    ".pdf",
-    ".doc",
-    ".docx",
-    ".ppt",
-    ".pptx",
-    ".xls",
-    ".xlsx",
-    ".jar",
-    ".zip",
-    ".tar",
-    ".gzip"
+    ".pdf", ".doc", ".docx", ".ppt", ".pptx", ".xls", ".xlsx",
+    ".odt", ".ods", ".odp", ".rtf", ".tex", ".epub", ".mobi"
+  ],
+  "archive_extensions": [
+    ".zip", ".tar", ".gz", ".bz2", ".xz", ".7z", ".rar", ".jar",
+    ".war", ".ear", ".deb", ".rpm", ".dmg", ".iso"
   ],
   "executable_extensions": [
-    ".exe",
-    ".dll",
-    ".bin",
-    ".sh",
-    ".bat"
+    ".exe", ".dll", ".bin", ".sh", ".bat", ".cmd", ".com", ".scr",
+    ".msi", ".app", ".deb", ".rpm", ".run"
   ],
   "settings_extensions": [
-    ".ini",
-    ".cfg",
-    ".conf",
-    ".json",
-    ".yaml",
-    ".yml"
+    ".ini", ".cfg", ".conf", ".json", ".yaml", ".yml", ".toml",
+    ".properties", ".plist", ".reg", ".env"
   ],
   "additional_ignore_types": [
-    ".lock"
+    ".lock", ".pyc", ".pyo", ".so", ".dylib", ".a", ".lib", ".obj",
+    ".o", ".class", ".dex", ".cache", ".tmp", ".temp", ".bak",
+    ".swp", ".swo", ".DS_Store", ".thumbs.db"
   ],
-  "default_output_file": "output.txt"
+  "default_output_file": "output.txt",
+  "max_file_size_mb": 10,
+  "encoding_fallbacks": ["utf-8", "latin-1", "cp1252"],
+  "tree_symbols": {
+    "branch": "├── ",
+    "last_branch": "└── ",
+    "vertical": "│   ",
+    "space": "    "
+  },
+  "docx_settings": {
+    "font_name": "Consolas",
+    "font_size": 9,
+    "heading_font": "Arial",
+    "margins": {
+      "top": 1.0,
+      "bottom": 1.0,
+      "left": 1.0,
+      "right": 1.0
+    }
+  }
 }
