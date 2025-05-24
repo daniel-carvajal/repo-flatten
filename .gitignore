@@ -1,1 +1,18 @@
 .DS_Store
+
+# Python build and cache artifacts
+*.py[cod]
+__pycache__/
+*.egg-info/
+*.pyo
+
+# Virtual environments
+.venv/
+venv/
+
+# Editor settings
+.vscode/
+.idea/
+
+# Dev/test/demo artifacts
+test-repo/
