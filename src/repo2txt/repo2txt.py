@@ -198,14 +198,10 @@ def should_ignore(item_path: str, args: argparse.Namespace, repo_root_path: str)
         True if the item should be ignored, False otherwise
         
     Note:
-        Filtering logic is applied in order of precedence:
-        1. Output file self-exclusion
-        2. Common development artifacts
-        3. Hidden files/directories
-        4. User-specified directory exclusions
-        5. Include directory restrictions
-        6. File-specific filters (include-files, ignore-files, ignore-types)
-        7. Settings file filtering
+        Enhanced filtering logic now supports both directory names AND relative paths:
+        - --exclude-dir android → excludes all directories named "android"
+        - --exclude-dir example/android → excludes only the "android" dir inside "example"
+        - --exclude-dir example/android ios → excludes the specific path AND all "ios" dirs
     """
     item_path_abs = os.path.abspath(item_path)
     item_name = os.path.basename(item_path)
@@ -230,15 +226,39 @@ def should_ignore(item_path: str, args: argparse.Namespace, repo_root_path: str)
     if item_name.startswith('.') and item_path_abs != os.path.abspath(repo_root_path):
         return True
     
-    # Apply directory exclusions
-    if os.path.isdir(item_path) and args.exclude_dir and item_name in args.exclude_dir:
-        return True
+    # ENHANCED: Apply directory exclusions (supports both names and paths)
+    if os.path.isdir(item_path) and args.exclude_dir:
+        # Get relative path from the processing root (include_dir or repo_path)
+        processing_root = os.path.abspath(args.include_dir or args.repo_path)
+        try:
+            relative_path = os.path.relpath(item_path_abs, processing_root)
+            # Normalize path separators for cross-platform compatibility
+            relative_path = relative_path.replace(os.sep, '/')
+        except ValueError:
+            # Handle case where paths are on different drives (Windows)
+            relative_path = item_path_abs
+        
+        for exclude_pattern in args.exclude_dir:
+            # Normalize the exclude pattern
+            exclude_pattern = exclude_pattern.replace('\\', '/')
+            
+            # Check if it's a path-based exclusion (contains /)
+            if '/' in exclude_pattern:
+                # Path-based exclusion: match exact relative path or parent path
+                if relative_path == exclude_pattern or relative_path.startswith(exclude_pattern + '/'):
+                    if args.verbose:
+                        print(f"Excluding (path match): {relative_path} matches pattern {exclude_pattern}")
+                    return True
+            else:
+                # Name-based exclusion: match directory name (existing behavior)
+                if item_name == exclude_pattern:
+                    if args.verbose:
+                        print(f"Excluding (name match): {item_name}")
+                    return True
 
     # Apply include directory restriction
     if args.include_dir:
         abs_include_dir = os.path.abspath(args.include_dir)
-        # Only allow items that are inside the include directory
-        # Remove the problematic reverse check
         if not item_path_abs.startswith(abs_include_dir):
             return True
 
@@ -258,7 +278,6 @@ def should_ignore(item_path: str, args: argparse.Namespace, repo_root_path: str)
             return True
 
     return False
-
 
 def write_tree(dir_path: str, output_file: Union[TextIO, "Document"], args: argparse.Namespace, 
                repo_root_path: str, prefix: str = "", is_last: bool = True, is_root: bool = True) -> int:

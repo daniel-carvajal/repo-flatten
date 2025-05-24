@@ -32,6 +32,7 @@
 ### ⚡ **Advanced Filtering**
 - **File Type Filtering**: Ignore images, videos, binaries by default
 - **Directory Exclusion**: Skip `node_modules`, `.git`, `__pycache__`, etc.
+- **Path-Based Exclusions**: Precisely exclude directories by relative path (NEW!)
 - **Pattern Matching**: Include only specific file types with wildcards
 - **Settings Control**: Toggle inclusion of config files
 - **Scope Limiting**: Process only specific directories
@@ -135,6 +136,32 @@ Final Output
 
 ## 📋 Usage Patterns
 
+### **🆕 Path-Based Directory Exclusions**
+NEW! Enhanced `--exclude-dir` now supports both directory names AND relative paths:
+
+```bash
+# Traditional: Exclude all directories named "android" everywhere
+repo2txt --exclude-dir android -o no_android.txt
+
+# NEW: Exclude only specific android directories by path
+repo2txt --exclude-dir example/android FabricExample/android -o selective.txt
+
+# Mixed: Combine path and name exclusions
+repo2txt --exclude-dir example/android ios windows -o clean_output.txt
+
+# Precise control for complex projects
+repo2txt --include-dir third-party/react-native-pdf \
+         --exclude-dir example/android example/ios \
+         --no-content -o structure.txt
+```
+
+**Path-based exclusion rules:**
+- `--exclude-dir android` → excludes ALL directories named "android"
+- `--exclude-dir example/android` → excludes ONLY the android directory inside example
+- `--exclude-dir src/tests ios` → excludes src/tests path AND all ios directories
+- Paths are relative to the processing root (`--include-dir` or repo root)
+- Cross-platform compatible (works with both `/` and `\` separators)
+
 ### **Whitelist Approach (Specific Files Only)**
 ```bash
 # Only Python files across entire repo
@@ -155,8 +182,8 @@ repo2txt --include-dir src -o src_all.txt
 # Python files in src/ directory only
 repo2txt --include-dir src --include-files "*.py" -o src_python.txt
 
-# Everything in src/ except test subdirectories
-repo2txt --include-dir src --exclude-dir tests -o src_no_tests.txt
+# Everything in src/ except specific test subdirectories
+repo2txt --include-dir src --exclude-dir src/tests src/__tests__ -o src_no_tests.txt
 ```
 
 ### **Blacklist Approach (Everything Except...)**
@@ -164,8 +191,8 @@ repo2txt --include-dir src --exclude-dir tests -o src_no_tests.txt
 # Everything except images/videos (uses default excludes + custom)
 repo2txt --ignore-types .jpg .png .mp4 -o no_media.txt
 
-# Everything except test directories
-repo2txt --exclude-dir tests __tests__ test -o no_tests.txt
+# Everything except specific test directories
+repo2txt --exclude-dir tests/__tests__ example/tests -o no_tests.txt
 
 # All file types but skip settings files
 repo2txt --ignore-types none --ignore-settings -o code_only.txt
@@ -173,14 +200,14 @@ repo2txt --ignore-types none --ignore-settings -o code_only.txt
 
 ### **Mixed Strategies**
 ```bash
-# Python/JS files, but skip test directories
-repo2txt --include-files "*.py" "*.js" --exclude-dir tests -o code_no_tests.txt
+# Python/JS files, but skip specific test directories
+repo2txt --include-files "*.py" "*.js" --exclude-dir src/tests example/tests -o code_no_tests.txt
 
 # Everything in backend/ except logs and temp files
 repo2txt --include-dir backend --ignore-files "*.log" "*.tmp" -o backend_clean.txt
 
-# Config files but not from node_modules
-repo2txt --include-files "*.json" "*.yaml" --exclude-dir node_modules -o clean_configs.txt
+# Config files but not from node_modules or specific paths
+repo2txt --include-files "*.json" "*.yaml" --exclude-dir node_modules example/config -o clean_configs.txt
 ```
 
 ### **Debugging & Analysis**
@@ -188,11 +215,11 @@ repo2txt --include-files "*.json" "*.yaml" --exclude-dir node_modules -o clean_c
 # See what would be processed without generating output
 repo2txt --dry-run --verbose
 
-# Check specific directory structure
-repo2txt --include-dir src --dry-run --verbose
+# Check specific directory structure with path exclusions
+repo2txt --include-dir src --exclude-dir src/tests --dry-run --verbose
 
-# Test file patterns
-repo2txt --include-files "*.py" --dry-run
+# Test file patterns with path-based exclusions
+repo2txt --include-files "*.py" --exclude-dir example/android --dry-run
 ```
 
 ### **Structure-Only Output**
@@ -200,8 +227,8 @@ repo2txt --include-files "*.py" --dry-run
 # Output only the directory/file tree (no code)
 repo2txt --no-content -o structure_only.txt
 
-# Combine with filtering
-repo2txt --include-dir src --exclude-dir tests --no-content -o tree_src.txt
+# Combine with precise path filtering
+repo2txt --include-dir src --exclude-dir src/tests src/__pycache__ --no-content -o tree_src.txt
 ```
 
 ## ⚙️ Configuration
@@ -214,15 +241,32 @@ repo2txt --include-dir src --exclude-dir tests --no-content -o tree_src.txt
 | `-o FILE` | Output file (.txt/.docx) | `-o docs.docx` |
 | `--include-dir DIR` | **Scope to directory only** | `--include-dir src` |
 | `--include-files PATTERNS` | **Whitelist: ONLY these files** | `--include-files "*.py" "*.js"` |
-| `--exclude-dir DIRS` | Remove directories | `--exclude-dir tests docs` |
+| `--exclude-dir DIRS/PATHS` | **Remove directories (names or paths)** | `--exclude-dir tests example/android` |
 | `--ignore-files FILES` | Skip specific files | `--ignore-files README.md` |
 | `--ignore-types EXTS` | Skip file extensions | `--ignore-types .log .tmp` |
 | `--ignore-settings` | Skip config files | `--ignore-settings` |
 | `--verbose` | Show processing details | `--verbose` |
 | `--dry-run` | Preview only (no output) | `--dry-run` |
-| `--no-content`       | Skip file contents and output only the folder/file structure | `--no-content` |
+| `--no-content` | Skip file contents and output only the folder/file structure | `--no-content` |
 
 **Use `none` to disable**: `--ignore-types none`, `--exclude-dir none`
+
+### **🆕 Enhanced --exclude-dir Examples**
+
+```bash
+# Traditional name-based exclusions (existing behavior)
+--exclude-dir android ios windows
+
+# NEW: Path-based exclusions for precise control
+--exclude-dir example/android FabricExample/ios
+
+# Mixed: Combine both approaches
+--exclude-dir android example/tests src/__pycache__
+
+# Complex project filtering
+--include-dir third-party/react-native-pdf \
+--exclude-dir example/android example/ios FabricExample/android
+```
 
 ### Configuration File (`config.json`)
 
@@ -257,7 +301,7 @@ my-project/
 │   ├── utils/
 │   │   ├── helpers.py
 │   │   └── constants.py
-│   └── tests/
+│   └── tests/               # Excluded with --exclude-dir src/tests
 │       └── test_main.py
 ├── README.md
 └── requirements.txt
@@ -292,8 +336,7 @@ if __name__ == "__main__":
 ```bash
 # Basic documentation
 repo2txt                                    # Current directory, all files
-
-repo2txt --no-content                        # Tree structure only, no file content
+repo2txt --no-content                      # Tree structure only, no file content
 
 # Language-specific
 repo2txt --include-files "*.py"             # Python only
@@ -303,15 +346,15 @@ repo2txt --include-files "*.py" "*.js"      # Python + JavaScript
 repo2txt --include-dir src                  # Only src/ directory
 repo2txt --include-dir api --include-files "*.py"  # Python files in api/ only
 
-# Clean output (no build artifacts)
-repo2txt --exclude-dir node_modules dist build     # Skip common build dirs
-repo2txt --ignore-types none --exclude-dir tests   # All files except tests
+# Clean output (no build artifacts) - NEW path-based exclusions
+repo2txt --exclude-dir node_modules dist build example/android  # Skip common build dirs + specific paths
+repo2txt --ignore-types none --exclude-dir tests example/tests  # All files except specific test dirs
 
 # Configuration files
 repo2txt --include-files "*.json" "*.yaml" "*.toml"  # Config files only
 
-# Debugging
-repo2txt --dry-run --verbose               # See what would be processed
+# Debugging with enhanced exclusions
+repo2txt --exclude-dir example/android --dry-run --verbose  # See what path exclusions match
 ```
 
 ## 🧪 Testing
@@ -349,9 +392,11 @@ test-repo/
 ```
 
 Tests validate various filtering scenarios:
-- Excluding specific directories (e.g., all `ios` folders)
+- Excluding specific directories by name (e.g., all `ios` folders)
+- Excluding specific directories by path (e.g., only `src/android`)
 - Including only specific subdirectories (e.g., `test-repo/src/ios`)
 - File pattern matching (e.g., only `*.py` files)
+- Mixed name and path-based exclusions
 
 ## 🤝 Use Cases
 
@@ -359,33 +404,39 @@ Tests validate various filtering scenarios:
 Perfect for creating clean, structured datasets for training code-aware AI models:
 
 ```bash
-# Clean Python training data
-repo2txt --include-files "*.py" --exclude-dir tests __pycache__ -o python_training.txt
+# Clean Python training data, excluding specific test directories
+repo2txt --include-files "*.py" --exclude-dir tests example/tests src/__tests__ -o python_training.txt
 
-# Multi-language dataset
-repo2txt --include-files "*.py" "*.js" "*.java" "*.cpp" -o multilang_training.txt
+# Multi-language dataset with precise platform exclusions
+repo2txt --include-files "*.py" "*.js" "*.java" "*.cpp" \
+         --exclude-dir android/build ios/build example/android \
+         -o multilang_training.txt
 ```
 
 ### 📚 **Documentation Generation**
 Generate comprehensive project documentation:
 
 ```bash
-# Full project overview
-repo2txt --exclude-dir node_modules .git -o project_overview.docx
+# Full project overview excluding platform-specific examples
+repo2txt --exclude-dir node_modules .git example/android example/ios -o project_overview.docx
 
-# Developer onboarding docs
-repo2txt --include-dir src docs --ignore-types .pyc .log -o onboarding.txt
+# Developer onboarding docs with precise filtering
+repo2txt --include-dir src docs --exclude-dir src/tests docs/examples \
+         --ignore-types .pyc .log -o onboarding.txt
 ```
 
 ### 🔍 **Code Analysis**
 Analyze codebases for patterns and structure:
 
 ```bash
-# Security audit preparation
-repo2txt --include-files "*.py" "*.js" "*.php" -o security_audit.txt
+# Security audit preparation with path-based exclusions
+repo2txt --include-files "*.py" "*.js" "*.php" \
+         --exclude-dir tests example/tests vendor/tests \
+         -o security_audit.txt
 
-# Architecture review
-repo2txt --include-dir src --exclude-dir tests -o architecture_review.docx
+# Architecture review excluding build artifacts and examples
+repo2txt --include-dir src --exclude-dir src/tests src/examples src/build \
+         -o architecture_review.docx
 ```
 
 ## 🐛 Troubleshooting
@@ -393,19 +444,27 @@ repo2txt --include-dir src --exclude-dir tests -o architecture_review.docx
 | Issue | Solution | Command |
 |-------|----------|---------|
 | **Files missing from output** | Use verbose to see what's excluded | `repo2txt --verbose --dry-run` |
+| **Path exclusions not working** | Check relative paths and use verbose | `--exclude-dir example/android --verbose` |
 | **Permission denied errors** | Check which directories are inaccessible | `repo2txt --verbose` |
 | **Too many files** | Use whitelist approach | `--include-files "*.py" "*.js"` |
 | **Wrong directory scope** | Verify include-dir path | `--include-dir src --dry-run` |
 | **Unexpected file types** | Check default ignore list | `--ignore-types none --verbose` |
 
 ### **Understanding Output**
-- **Verbose shows**: Which files are processed, permission errors, file counts
+- **Verbose shows**: Which files are processed, permission errors, file counts, path vs name exclusion matches
 - **Dry-run shows**: What would be included without generating output
 - **File paths**: Relative to repo root (or include-dir if specified)
+- **Path matching**: Shows "Excluding (path match)" vs "Excluding (name match)" in verbose mode
 
 ## 🔄 Version History
 
-### v2.0.0 (Latest)
+### v2.1.0 (Latest)
+- 🎯 **NEW: Path-based directory exclusions** - `--exclude-dir` now supports relative paths
+- 🔧 Enhanced cross-platform path normalization
+- 📊 Improved verbose logging for debugging exclusions
+- 🛡️ Maintained backward compatibility with existing name-based exclusions
+
+### v2.0.0
 - ✨ Added `--include-files` pattern matching
 - 🛡️ Enhanced error handling and encoding support
 - 📊 Added verbose mode and dry-run functionality
@@ -426,7 +485,7 @@ We welcome contributions! Here's how you can help:
 ### 🐛 **Bug Reports**
 - Use the issue tracker with detailed reproduction steps
 - Include sample repository structure if possible
-- Provide verbose output logs
+- Provide verbose output logs (especially for path exclusion issues)
 
 ### ✨ **Feature Requests**
 - Check existing issues before creating new ones
