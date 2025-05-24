@@ -105,11 +105,11 @@ Repository Files
    • Output file, .env files, .git/, node_modules/, __pycache__/, hidden files
       ↓
 2. 📁 Directory Scope Flags (optional)
-   • --include-dir: Process only this directory (excludes all others, then applies file filters like --include-files "*.py")
+   • --only-dir: Process only this directory (excludes all others, then applies file filters like --include-files "*.py")
    • --exclude-dir: Remove these directories (keeps everything else, combines with any flags like --ignore-types .log)
       ↓
 3. ✅ File Whitelist Flags (optional - overrides defaults)
-   • --include-files: ONLY process files matching these patterns (works within directory scope set by step 2's --include-dir/--exclude-dir, excludes all others). This means we can filter purely by pattern, limit to a directory then filter by pattern, or exclude directories then filter by pattern.
+   • --include-files: ONLY process files matching these patterns (works within directory scope set by step 2's --only-dir/--exclude-dir, excludes all others). This means we can filter purely by pattern, limit to a directory then filter by pattern, or exclude directories then filter by pattern.
       ↓
 4. ❌ File Blacklist Flags (applied to remaining files)
    • --ignore-files: Skip specific filenames
@@ -123,7 +123,7 @@ Final Output
 | Rule | Behavior | Override? |
 |------|----------|-----------|
 | **Hard exclusions** | Always blocked | ❌ Never |
-| **`--include-dir`** | Limits scope to one directory | ❌ No |
+| **`--only-dir`** | Limits scope to one directory | ❌ No |
 | **`--include-files`** | Whitelist mode - ONLY these files | ⚠️ Overrides ignore-types defaults |
 | **Directory filters** | Remove/keep entire directories | ✅ Use `none` to disable |
 | **File filters** | Remove individual files | ✅ Use `none` to disable |
@@ -150,7 +150,7 @@ repo2txt --exclude-dir example/android FabricExample/android -o selective.txt
 repo2txt --exclude-dir example/android ios windows -o clean_output.txt
 
 # Precise control for complex projects
-repo2txt --include-dir third-party/react-native-pdf \
+repo2txt --only-dir third-party/react-native-pdf \
          --exclude-dir example/android example/ios \
          --no-content -o structure.txt
 ```
@@ -159,7 +159,7 @@ repo2txt --include-dir third-party/react-native-pdf \
 - `--exclude-dir android` → excludes ALL directories named "android"
 - `--exclude-dir example/android` → excludes ONLY the android directory inside example
 - `--exclude-dir src/tests ios` → excludes src/tests path AND all ios directories
-- Paths are relative to the processing root (`--include-dir` or repo root)
+- Paths are relative to the processing root (`--only-dir` or repo root)
 - Cross-platform compatible (works with both `/` and `\` separators)
 
 ### **Whitelist Approach (Specific Files Only)**
@@ -177,13 +177,13 @@ repo2txt --include-files "*.md" "*.rst" "*.txt" -o docs_only.txt
 ### **Scope + Filter (Directory First, Then Refine)**
 ```bash
 # All files in src/ directory only
-repo2txt --include-dir src -o src_all.txt
+repo2txt --only-dir src -o src_all.txt
 
 # Python files in src/ directory only
-repo2txt --include-dir src --include-files "*.py" -o src_python.txt
+repo2txt --only-dir src --include-files "*.py" -o src_python.txt
 
 # Everything in src/ except specific test subdirectories
-repo2txt --include-dir src --exclude-dir src/tests src/__tests__ -o src_no_tests.txt
+repo2txt --only-dir src --exclude-dir src/tests src/__tests__ -o src_no_tests.txt
 ```
 
 ### **Blacklist Approach (Everything Except...)**
@@ -204,7 +204,7 @@ repo2txt --ignore-types none --ignore-settings -o code_only.txt
 repo2txt --include-files "*.py" "*.js" --exclude-dir src/tests example/tests -o code_no_tests.txt
 
 # Everything in backend/ except logs and temp files
-repo2txt --include-dir backend --ignore-files "*.log" "*.tmp" -o backend_clean.txt
+repo2txt --only-dir backend --ignore-files "*.log" "*.tmp" -o backend_clean.txt
 
 # Config files but not from node_modules or specific paths
 repo2txt --include-files "*.json" "*.yaml" --exclude-dir node_modules example/config -o clean_configs.txt
@@ -216,7 +216,7 @@ repo2txt --include-files "*.json" "*.yaml" --exclude-dir node_modules example/co
 repo2txt --dry-run --verbose
 
 # Check specific directory structure with path exclusions
-repo2txt --include-dir src --exclude-dir src/tests --dry-run --verbose
+repo2txt --only-dir src --exclude-dir src/tests --dry-run --verbose
 
 # Test file patterns with path-based exclusions
 repo2txt --include-files "*.py" --exclude-dir example/android --dry-run
@@ -228,7 +228,7 @@ repo2txt --include-files "*.py" --exclude-dir example/android --dry-run
 repo2txt --no-content -o structure_only.txt
 
 # Combine with precise path filtering
-repo2txt --include-dir src --exclude-dir src/tests src/__pycache__ --no-content -o tree_src.txt
+repo2txt --only-dir src --exclude-dir src/tests src/__pycache__ --no-content -o tree_src.txt
 ```
 
 ## ⚙️ Configuration
@@ -239,7 +239,7 @@ repo2txt --include-dir src --exclude-dir src/tests src/__pycache__ --no-content 
 |------|----------|---------|
 | `-r PATH` | Repository path | `-r /path/to/repo` |
 | `-o FILE` | Output file (.txt/.docx) | `-o docs.docx` |
-| `--include-dir DIR` | **Scope to directory only** | `--include-dir src` |
+| `--only-dir DIR` | **Scope to directory only** | `--only-dir src` |
 | `--include-files PATTERNS` | **Whitelist: ONLY these files** | `--include-files "*.py" "*.js"` |
 | `--exclude-dir DIRS/PATHS` | **Remove directories (names or paths)** | `--exclude-dir tests example/android` |
 | `--ignore-files FILES` | Skip specific files | `--ignore-files README.md` |
@@ -264,7 +264,7 @@ repo2txt --include-dir src --exclude-dir src/tests src/__pycache__ --no-content 
 --exclude-dir android example/tests src/__pycache__
 
 # Complex project filtering
---include-dir third-party/react-native-pdf \
+--only-dir third-party/react-native-pdf \
 --exclude-dir example/android example/ios FabricExample/android
 ```
 
@@ -343,8 +343,8 @@ repo2txt --include-files "*.py"             # Python only
 repo2txt --include-files "*.py" "*.js"      # Python + JavaScript
 
 # Directory-focused  
-repo2txt --include-dir src                  # Only src/ directory
-repo2txt --include-dir api --include-files "*.py"  # Python files in api/ only
+repo2txt --only-dir src                     # Only src/ directory
+repo2txt --only-dir api --include-files "*.py"  # Python files in api/ only
 
 # Clean output (no build artifacts) - NEW path-based exclusions
 repo2txt --exclude-dir node_modules dist build example/android  # Skip common build dirs + specific paths
@@ -421,7 +421,7 @@ Generate comprehensive project documentation:
 repo2txt --exclude-dir node_modules .git example/android example/ios -o project_overview.docx
 
 # Developer onboarding docs with precise filtering
-repo2txt --include-dir src docs --exclude-dir src/tests docs/examples \
+repo2txt --only-dir src docs --exclude-dir src/tests docs/examples \
          --ignore-types .pyc .log -o onboarding.txt
 ```
 
@@ -435,7 +435,7 @@ repo2txt --include-files "*.py" "*.js" "*.php" \
          -o security_audit.txt
 
 # Architecture review excluding build artifacts and examples
-repo2txt --include-dir src --exclude-dir src/tests src/examples src/build \
+repo2txt --only-dir src --exclude-dir src/tests src/examples src/build \
          -o architecture_review.docx
 ```
 
@@ -447,13 +447,13 @@ repo2txt --include-dir src --exclude-dir src/tests src/examples src/build \
 | **Path exclusions not working** | Check relative paths and use verbose | `--exclude-dir example/android --verbose` |
 | **Permission denied errors** | Check which directories are inaccessible | `repo2txt --verbose` |
 | **Too many files** | Use whitelist approach | `--include-files "*.py" "*.js"` |
-| **Wrong directory scope** | Verify include-dir path | `--include-dir src --dry-run` |
+| **Wrong directory scope** | Verify only-dir path | `--only-dir src --dry-run` |
 | **Unexpected file types** | Check default ignore list | `--ignore-types none --verbose` |
 
 ### **Understanding Output**
 - **Verbose shows**: Which files are processed, permission errors, file counts, path vs name exclusion matches
 - **Dry-run shows**: What would be included without generating output
-- **File paths**: Relative to repo root (or include-dir if specified)
+- **File paths**: Relative to repo root (or only-dir if specified)
 - **Path matching**: Shows "Excluding (path match)" vs "Excluding (name match)" in verbose mode
 
 ## 🔄 Version History

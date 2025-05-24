@@ -113,7 +113,7 @@ Examples:
   Advanced filtering:
     %(prog)s --include-files "*.py" "*.js" -o code_only.txt
     %(prog)s --ignore-types --exclude-dir tests docs -o minimal.txt
-    %(prog)s --include-dir src --ignore-settings -o src_only.txt
+    %(prog)s --only-dir src --ignore-settings -o src_only.txt
     
   Special cases:
     %(prog)s --ignore-types none  # Include all file types
@@ -155,10 +155,10 @@ Examples:
                        help='Ignore common configuration/settings files.')
     
     # Include options
-    parser.add_argument('--include-dir', 
-                       nargs='?', 
-                       default=None,
-                       help='Process only this specific directory and its contents.')
+    parser.add_argument('--only-dir', 
+                    nargs='?', 
+                    default=None,
+                    help='Process only this specific directory and its contents.')
     
     parser.add_argument('--include-files', 
                        nargs='*', 
@@ -229,7 +229,8 @@ def should_ignore(item_path: str, args: argparse.Namespace, repo_root_path: str)
     # ENHANCED: Apply directory exclusions (supports both names and paths)
     if os.path.isdir(item_path) and args.exclude_dir:
         # Get relative path from the processing root (include_dir or repo_path)
-        processing_root = os.path.abspath(args.include_dir or args.repo_path)
+        processing_root = os.path.abspath(args.only_dir or args.repo_path)
+
         try:
             relative_path = os.path.relpath(item_path_abs, processing_root)
             # Normalize path separators for cross-platform compatibility
@@ -256,10 +257,10 @@ def should_ignore(item_path: str, args: argparse.Namespace, repo_root_path: str)
                         print(f"Excluding (name match): {item_name}")
                     return True
 
-    # Apply include directory restriction
-    if args.include_dir:
-        abs_include_dir = os.path.abspath(args.include_dir)
-        if not item_path_abs.startswith(abs_include_dir):
+    # Apply only directory restriction
+    if args.only_dir:
+        abs_only_dir = os.path.abspath(args.only_dir)
+        if not item_path_abs.startswith(abs_only_dir):
             return True
 
     # Apply file-specific filters
@@ -411,7 +412,7 @@ def write_file_contents_in_order(dir_path: str, output_file: Union[TextIO, "Docu
         if should_ignore(os.path.abspath(item_path), args, repo_root_path):
             continue
         
-        relative_start = os.path.abspath(args.include_dir or args.repo_path)
+        relative_start = os.path.abspath(args.only_dir or args.repo_path)
         relative_path = os.path.relpath(item_path, start=relative_start)
         
         if os.path.isdir(item_path):
@@ -489,7 +490,7 @@ def validate_arguments(args: argparse.Namespace) -> bool:
         args.exclude_dir = []
     
     # Validate repository path
-    processing_root_path = os.path.abspath(args.include_dir or args.repo_path)
+    processing_root_path = os.path.abspath(args.only_dir or args.repo_path)
     if not os.path.isdir(processing_root_path):
         print(f"Error: '{processing_root_path}' is not a valid directory.", file=sys.stderr)
         return False
@@ -522,7 +523,7 @@ def main():
     if not validate_arguments(args):
         sys.exit(1)
     
-    processing_root_path = os.path.abspath(args.include_dir or args.repo_path)
+    processing_root_path = os.path.abspath(args.only_dir or args.repo_path)
     
     if args.verbose:
         print(f"Processing directory: {processing_root_path}")
