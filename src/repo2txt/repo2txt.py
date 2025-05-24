@@ -17,9 +17,17 @@ import fnmatch
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Union, TextIO
-from docx import Document
-from docx.shared import Pt
-from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
+
+# Try to import docx components, but make them optional
+try:
+    from docx import Document
+    from docx.shared import Pt
+    from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
+    DOCX_AVAILABLE = True
+except ImportError:
+    DOCX_AVAILABLE = False
+    Document = None
+    print("Warning: python-docx not available. DOCX output will not work.")
 
 # Configuration constants
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -170,6 +178,10 @@ Examples:
                        action='store_true',
                        help='Show what would be processed without generating output.')
     
+    parser.add_argument('--no-content',
+                    action='store_true',
+                    help='Skip file content output and include only the folder/file hierarchy.')
+
     return parser.parse_args()
 
 
@@ -246,7 +258,7 @@ def should_ignore(item_path: str, args: argparse.Namespace, repo_root_path: str)
     return False
 
 
-def write_tree(dir_path: str, output_file: Union[TextIO, Document], args: argparse.Namespace, 
+def write_tree(dir_path: str, output_file: Union[TextIO, "Document"], args: argparse.Namespace, 
                repo_root_path: str, prefix: str = "", is_last: bool = True, is_root: bool = True) -> int:
     """
     Recursively write the directory tree structure to output.
@@ -267,7 +279,7 @@ def write_tree(dir_path: str, output_file: Union[TextIO, Document], args: argpar
     
     if is_root:
         root_name = f"{os.path.basename(dir_path)}/"
-        if isinstance(output_file, Document):
+        if DOCX_AVAILABLE and hasattr(output_file, 'add_paragraph'):
             paragraph = output_file.add_paragraph()
             paragraph.add_run(root_name)
         else:
@@ -295,7 +307,7 @@ def write_tree(dir_path: str, output_file: Union[TextIO, Document], args: argpar
         # Create tree structure
         current_prefix = f"{prefix}{'└── ' if is_last_item else '├── '}{item}"
         
-        if isinstance(output_file, Document):
+        if DOCX_AVAILABLE and hasattr(output_file, 'add_paragraph'):
             paragraph = output_file.add_paragraph()
             paragraph.add_run(f"{prefix}{'└── ' if is_last_item else '├── '}{item}")
         else:
@@ -315,7 +327,7 @@ def write_tree(dir_path: str, output_file: Union[TextIO, Document], args: argpar
     return items_processed
 
 
-def write_file_content(file_path: str, output_file: Union[TextIO, Document], depth: int) -> bool:
+def write_file_content(file_path: str, output_file: Union[TextIO, "Document"], depth: int) -> bool:
     """
     Write the contents of a file to the output with proper formatting.
     
@@ -331,7 +343,7 @@ def write_file_content(file_path: str, output_file: Union[TextIO, Document], dep
     
     try:
         with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-            if isinstance(output_file, Document):
+            if DOCX_AVAILABLE and hasattr(output_file, 'add_paragraph'):
                 content = f.read()
                 paragraph = output_file.add_paragraph(content)
                 paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
@@ -341,7 +353,7 @@ def write_file_content(file_path: str, output_file: Union[TextIO, Document], dep
         return True
     except Exception as e:
         error_msg = f"Error reading file: {e}"
-        if isinstance(output_file, Document):
+        if DOCX_AVAILABLE and hasattr(output_file, 'add_paragraph'):
             error_paragraph = output_file.add_paragraph(error_msg)
             error_paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
         else:
@@ -349,7 +361,7 @@ def write_file_content(file_path: str, output_file: Union[TextIO, Document], dep
         return False
 
 
-def write_file_contents_in_order(dir_path: str, output_file: Union[TextIO, Document], 
+def write_file_contents_in_order(dir_path: str, output_file: Union[TextIO, "Document"], 
                                 args: argparse.Namespace, repo_root_path: str, depth: int = 0) -> int:
     """
     Recursively write file contents in directory tree order.
@@ -387,7 +399,7 @@ def write_file_contents_in_order(dir_path: str, output_file: Union[TextIO, Docum
         elif os.path.isfile(item_path):
             # File begin marker
             begin_marker = f"[File Begins] {relative_path}"
-            if isinstance(output_file, Document):
+            if DOCX_AVAILABLE and hasattr(output_file, 'add_heading'):
                 output_file.add_heading(begin_marker, level=3)
             else:
                 output_file.write('  ' * depth + f"{begin_marker}\n")
@@ -399,7 +411,7 @@ def write_file_contents_in_order(dir_path: str, output_file: Union[TextIO, Docum
             
             # File end marker
             end_marker = f"[File Ends] {relative_path}"
-            if isinstance(output_file, Document):
+            if DOCX_AVAILABLE and hasattr(output_file, 'add_heading'):
                 output_file.add_heading(end_marker, level=3)
             else:
                 output_file.write('  ' * depth + f"{end_marker}\n\n")
@@ -407,13 +419,16 @@ def write_file_contents_in_order(dir_path: str, output_file: Union[TextIO, Docum
     return files_processed
 
 
-def create_docx_document() -> Document:
+def create_docx_document():
     """
     Create and configure a new DOCX document with appropriate styling.
     
     Returns:
         Configured Document object
     """
+    if not DOCX_AVAILABLE:
+        raise ImportError("python-docx is required for DOCX output but is not installed")
+    
     doc = Document()
     
     # Configure default style
@@ -464,6 +479,12 @@ def validate_arguments(args: argparse.Namespace) -> bool:
         print(f"Error: Output directory '{output_dir}' does not exist.", file=sys.stderr)
         return False
     
+    # Check for DOCX output when library is not available
+    if args.output_file.endswith('.docx') and not DOCX_AVAILABLE:
+        print("Error: DOCX output requested but python-docx is not installed.", file=sys.stderr)
+        print("Install it with: pip install python-docx", file=sys.stderr)
+        return False
+    
     # Validate include_files patterns
     if args.include_files is not None and len(args.include_files) == 0:
         print("Warning: --include-files specified with no patterns. No files will be included.")
@@ -497,11 +518,13 @@ def main():
             doc.add_heading("Directory/File Tree -->", 2)
             tree_items = write_tree(processing_root_path, doc, args, processing_root_path)
             doc.add_heading("<-- Directory/File Tree", 2)
-            
-            # File contents section
-            doc.add_heading("File Contents -->", 2)
-            file_count = write_file_contents_in_order(processing_root_path, doc, args, processing_root_path)
-            doc.add_heading("<-- File Contents", 2)
+                        
+           # Optionally skip file content section if --no-content is used             
+            file_count = 0
+            if not args.no_content:
+                doc.add_heading("File Contents -->", 2)
+                file_count = write_file_contents_in_order(processing_root_path, doc, args, processing_root_path)
+                doc.add_heading("<-- File Contents", 2)
             
             # Save document
             doc.save(args.output_file)
@@ -520,10 +543,12 @@ def main():
                 tree_items = write_tree(processing_root_path, f, args, processing_root_path)
                 f.write("\n<-- Directory/File Tree\n\n")
                 
-                # File contents section
-                f.write("File Contents -->\n\n")
-                file_count = write_file_contents_in_order(processing_root_path, f, args, processing_root_path)
-                f.write("\n<-- File Contents\n\n")
+                # Optionally skip file content section if --no-content is used
+                file_count = 0
+                if not args.no_content:
+                    f.write("File Contents -->\n\n")
+                    file_count = write_file_contents_in_order(processing_root_path, f, args, processing_root_path)
+                    f.write("\n<-- File Contents\n\n")
             
             if args.verbose:
                 print(f"Text file saved with {tree_items} items and {file_count} files")

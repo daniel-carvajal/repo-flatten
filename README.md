@@ -35,6 +35,7 @@
 - **Pattern Matching**: Include only specific file types with wildcards
 - **Settings Control**: Toggle inclusion of config files
 - **Scope Limiting**: Process only specific directories
+- **Content Toggle**: Skip file contents entirely with `--no-content` to generate structure-only output
 
 ### 🛡️ **Robust & Reliable**
 - **Error Handling**: Graceful handling of permission errors and encoding issues
@@ -178,6 +179,15 @@ repo2txt --include-dir src --dry-run --verbose
 repo2txt --include-files "*.py" --dry-run
 ```
 
+### **Structure-Only Output**
+```bash
+# Output only the directory/file tree (no code)
+repo2txt --no-content -o structure_only.txt
+
+# Combine with filtering
+repo2txt --include-dir src --exclude-dir tests --no-content -o tree_src.txt
+```
+
 ## ⚙️ Configuration
 
 ### **Command-Line Reference**
@@ -194,6 +204,7 @@ repo2txt --include-files "*.py" --dry-run
 | `--ignore-settings` | Skip config files | `--ignore-settings` |
 | `--verbose` | Show processing details | `--verbose` |
 | `--dry-run` | Preview only (no output) | `--dry-run` |
+| `--no-content`       | Skip file contents and output only the folder/file structure | `--no-content` |
 
 **Use `none` to disable**: `--ignore-types none`, `--exclude-dir none`
 
@@ -265,6 +276,8 @@ if __name__ == "__main__":
 ```bash
 # Basic documentation
 repo2txt                                    # Current directory, all files
+
+repo2txt --no-content                        # Tree structure only, no file content
 
 # Language-specific
 repo2txt --include-files "*.py"             # Python only
@@ -344,6 +357,7 @@ repo2txt --include-dir src --exclude-dir tests -o architecture_review.docx
 - 🎨 Improved DOCX formatting with monospace fonts
 - ⚡ Better performance for large repositories
 - 🔧 Comprehensive configuration options
+- 🌳 Added `--no-content` flag to output only the folder structure without file contents
 
 ### v1.x.x
 - 📄 Basic text and DOCX output
