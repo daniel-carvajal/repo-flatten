@@ -237,7 +237,9 @@ def should_ignore(item_path: str, args: argparse.Namespace, repo_root_path: str)
     # Apply include directory restriction
     if args.include_dir:
         abs_include_dir = os.path.abspath(args.include_dir)
-        if not (item_path_abs.startswith(abs_include_dir) or abs_include_dir.startswith(item_path_abs)):
+        # Only allow items that are inside the include directory
+        # Remove the problematic reverse check
+        if not item_path_abs.startswith(abs_include_dir):
             return True
 
     # Apply file-specific filters
