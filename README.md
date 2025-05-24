@@ -76,6 +76,22 @@ repo2txt -r /path/to/your/project -o project_docs.txt
 repo2txt -r /path/to/project -o documentation.docx --verbose
 ```
 
+### Development Commands
+
+```bash
+# Generate repo2txt output from the library source
+make repo2txt-lib
+
+# Seed the test-repo directory with test data
+make seed
+
+# Run automated tests with pytest
+make test
+
+# Clean generated test files and output
+make clean
+```
+
 ## 🎯 Filter Logic & Behavior
 
 Understanding how filters work together ensures predictable results every time.
@@ -297,6 +313,45 @@ repo2txt --include-files "*.json" "*.yaml" "*.toml"  # Config files only
 # Debugging
 repo2txt --dry-run --verbose               # See what would be processed
 ```
+
+## 🧪 Testing
+
+The project includes a comprehensive test suite and automation tools:
+
+```bash
+# Seed test data (creates test-repo directory structure)
+make seed
+
+# Run all tests with pytest
+make test
+
+# Clean up test artifacts and generated files
+make clean
+
+# Generate documentation for the library itself
+make repo2txt-lib
+```
+
+### Test Structure
+The testing system creates a sample repository structure for validation:
+
+```
+test-repo/
+├── README.md
+├── ios/
+│   └── AppDelegate.swift
+└── src/
+    ├── utils.py
+    ├── android/
+    │   └── MainActivity.kt
+    └── ios/
+        └── helper.swift
+```
+
+Tests validate various filtering scenarios:
+- Excluding specific directories (e.g., all `ios` folders)
+- Including only specific subdirectories (e.g., `test-repo/src/ios`)
+- File pattern matching (e.g., only `*.py` files)
 
 ## 🤝 Use Cases
 
