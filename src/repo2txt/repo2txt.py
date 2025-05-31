@@ -111,9 +111,9 @@ Examples:
     %(prog)s -r /path/to/repo -o report.docx
     
   Advanced filtering:
-    %(prog)s --include-files "*.py" "*.js" -o code_only.txt
+    %(prog)s --match-pattern "*.py" "*.js" -o code_only.txt
     %(prog)s --ignore-types --exclude-dir tests docs -o minimal.txt
-    %(prog)s --only-dir src --ignore-settings -o src_only.txt
+    %(prog)s --scope-to src --ignore-settings -o src_only.txt
     
   Special cases:
     %(prog)s --ignore-types none  # Include all file types
@@ -155,12 +155,12 @@ Examples:
                        help='Ignore common configuration/settings files.')
     
     # Include options
-    parser.add_argument('--only-dir', 
+    parser.add_argument('--scope-to', 
                     nargs='?', 
                     default=None,
                     help='Process only this specific directory and its contents.')
     
-    parser.add_argument('--include-files', 
+    parser.add_argument('--match-pattern', 
                        nargs='*', 
                        default=None,
                        help='Include only files matching these patterns (e.g., "*.py" "*.js").')
@@ -228,8 +228,8 @@ def should_ignore(item_path: str, args: argparse.Namespace, repo_root_path: str)
     
     # ENHANCED: Apply directory exclusions (supports both names and paths)
     if os.path.isdir(item_path) and args.exclude_dir:
-        # Get relative path from the processing root (include_dir or repo_path)
-        processing_root = os.path.abspath(args.only_dir or args.repo_path)
+        # Get relative path from the processing root (scope_to or repo_path)
+        processing_root = os.path.abspath(args.scope_to or args.repo_path)
 
         try:
             relative_path = os.path.relpath(item_path_abs, processing_root)
@@ -257,17 +257,17 @@ def should_ignore(item_path: str, args: argparse.Namespace, repo_root_path: str)
                         print(f"Excluding (name match): {item_name}")
                     return True
 
-    # Apply only directory restriction
-    if args.only_dir:
-        abs_only_dir = os.path.abspath(args.only_dir)
-        if not item_path_abs.startswith(abs_only_dir):
+    # Apply scope-to directory restriction
+    if args.scope_to:
+        abs_scope_to = os.path.abspath(args.scope_to)
+        if not item_path_abs.startswith(abs_scope_to):
             return True
 
     # Apply file-specific filters
     if os.path.isfile(item_path):
         # Include files filter (whitelist)
-        if args.include_files is not None:
-            if not any(fnmatch.fnmatch(item_name, pattern) for pattern in args.include_files):
+        if args.match_pattern is not None:
+            if not any(fnmatch.fnmatch(item_name, pattern) for pattern in args.match_pattern):
                 return True
         
         # Ignore files filter (blacklist)
@@ -412,7 +412,7 @@ def write_file_contents_in_order(dir_path: str, output_file: Union[TextIO, "Docu
         if should_ignore(os.path.abspath(item_path), args, repo_root_path):
             continue
         
-        relative_start = os.path.abspath(args.only_dir or args.repo_path)
+        relative_start = os.path.abspath(args.scope_to or args.repo_path)
         relative_path = os.path.relpath(item_path, start=relative_start)
         
         if os.path.isdir(item_path):
@@ -490,7 +490,7 @@ def validate_arguments(args: argparse.Namespace) -> bool:
         args.exclude_dir = []
     
     # Validate repository path
-    processing_root_path = os.path.abspath(args.only_dir or args.repo_path)
+    processing_root_path = os.path.abspath(args.scope_to or args.repo_path)
     if not os.path.isdir(processing_root_path):
         print(f"Error: '{processing_root_path}' is not a valid directory.", file=sys.stderr)
         return False
@@ -507,9 +507,9 @@ def validate_arguments(args: argparse.Namespace) -> bool:
         print("Install it with: pip install python-docx", file=sys.stderr)
         return False
     
-    # Validate include_files patterns
-    if args.include_files is not None and len(args.include_files) == 0:
-        print("Warning: --include-files specified with no patterns. No files will be included.")
+    # Validate match_pattern patterns
+    if args.match_pattern is not None and len(args.match_pattern) == 0:
+        print("Warning: --match-pattern specified with no patterns. No files will be included.")
     
     return True
 
@@ -523,12 +523,12 @@ def main():
     if not validate_arguments(args):
         sys.exit(1)
     
-    processing_root_path = os.path.abspath(args.only_dir or args.repo_path)
+    processing_root_path = os.path.abspath(args.scope_to or args.repo_path)
     
     if args.verbose:
         print(f"Processing directory: {processing_root_path}")
         print(f"Output file: {args.output_file}")
-        print(f"Include files: {args.include_files}")
+        print(f"Match patterns: {args.match_pattern}")
         print(f"Ignore types: {len(args.ignore_types)} extensions")
     
     try:
