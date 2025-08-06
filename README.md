@@ -1,14 +1,13 @@
-# 📄 repo2txt
+# 📄 repo-flatten
 
 > **Transform your codebase into AI-ready documentation in seconds**
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![PyPI version](https://badge.fury.io/py/repo2txt.svg)](https://badge.fury.io/py/repo2txt)
 
 ## 🎯 Overview
 
-`repo2txt` is a powerful Python tool designed to streamline the process of preparing codebases for AI training data and LLM interactions. Whether you're feeding code to GPT models, creating documentation, or analyzing project structures, this tool compiles your entire repository into a single, comprehensive document with intelligent filtering and professional formatting.
+`repo-flatten` is a powerful Python tool designed to streamline the process of preparing codebases for AI training data and LLM interactions. Whether you're feeding code to GPT models, creating documentation, or analyzing project structures, this tool compiles your entire repository into a single, comprehensive document with intelligent filtering and professional formatting.
 
 **Perfect for:**
 - 🤖 **AI/LLM Training**: Prepare clean, structured training data
@@ -55,12 +54,9 @@
 ### Installation
 
 ```bash
-# Via pip (recommended)
-pip install repo2txt
-
-# Or clone and run locally
-git clone https://github.com/yourusername/repo2txt.git
-cd repo2txt
+# Clone and run locally
+git clone https://github.com/daniel-carvajal/repo-flatten.git
+cd repo-flatten
 pip install -r requirements.txt
 ```
 
